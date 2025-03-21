@@ -1,0 +1,19 @@
+name: PR metadata annotation
+
+on:
+  - workflow_dispatch
+
+jobs:
+  annotate-pr-local:
+    runs-on: ubuntu-latest
+    name: Annotates pull request with metadata
+    steps:
+      - name: Annotate PR
+        uses: ./
+        with:
+          path: "action"
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pr_number: ${{ github.event.number }}
