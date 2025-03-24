@@ -1,4 +1,4 @@
-name: PR metadata annotation
+name: Tag List Annotation
 
 on: 
   pull_request:
@@ -10,10 +10,10 @@ jobs:
     permissions:
       pull-requests: write
       issues: write
-    name: Annotates pull request with metadata
+    name: Annotates pull request with table of repository tags
     steps:
       - name: Annotate PR
-        uses: sheeley820/PR-metadata-action@for-pr
+        uses: sheeley820/tag-list-action@main
         with:
           owner: ${{ github.repository_owner }}
           repo: ${{ github.event.repository.name }}
