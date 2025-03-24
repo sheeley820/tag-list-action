@@ -1,4 +1,4 @@
-name: PR metadata annotation
+name: Tag List Annotation
 
 on:
   - workflow_dispatch
@@ -6,7 +6,7 @@ on:
 jobs:
   annotate-pr-local:
     runs-on: ubuntu-latest
-    name: Annotates pull request with metadata
+    name: Annotates pull request with table of repository tags
     steps:
       - name: Annotate PR
         uses: ./
