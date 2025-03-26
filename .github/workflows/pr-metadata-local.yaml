@@ -7,13 +7,10 @@ jobs:
   annotate-pr-local:
     runs-on: ubuntu-latest
     name: Annotates pull request with table of repository tags
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Annotate PR
         uses: ./
         with:
           path: "action"
-          owner: ${{ github.repository_owner }}
-          repo: ${{ github.event.repository.name }}
-          ref: ${{ github.head_ref }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          pr_number: ${{ github.event.number }}

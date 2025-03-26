@@ -1,21 +1,21 @@
 const core = require('@actions/core');
-const github = require('@actions/github');
+const { context, getOctokit } = require('@actions/github');
 
 const main = async () => {
-    const owner = core.getInput('owner', { required: true });
-    const repo = core.getInput('repo', { required: true });
-    const pr_number = core.getInput('pr_number', { required: true });
-    const token = core.getInput('token', { required: true });
-    const ref = core.getInput('ref', { required: true });
+    const owner = core.getInput('owner') || context.repo.owner;
+    const repo = core.getInput('repo') || context.payload.repository?.name;
+    const pr_number = context.payload.number;
+    const token = process.env.GITHUB_TOKEN;
 
     const pullRequestNumber = parseInt(pr_number, 10);
 
-    const octokit = new github.getOctokit(token);
+    const octokit = new getOctokit(token);
     let tagsForRepo = [];
-    let tagTable = "";
+    let newTagTable = "";
+    let existingTagTable = "";
 
     try {
-        const { data: repoTags } = await octokit.rest.repos.listTags({ owner, repo });
+        const { data: repoTags } = await octokit.rest.repos.listTags({ owner, repo, per_page: 20 });
         const { data: commits} = await octokit.rest.pulls.listCommits({ owner, repo, pull_number: pullRequestNumber });
 
         const tagsWithDates = await Promise.all(repoTags.map(async (tag) => {
@@ -40,11 +40,18 @@ const main = async () => {
                 date: tag.date
             };
         });
-        tagTable = tagsForRepo.reduce((acc, tag, ind) => {
+        newTagTable = tagsForRepo.reduce((acc, tag, ind) => {
             if (tag.isInPullRequest) {
                 return acc + `| (new) **${tag.name}** | **${tag.date}** |\n`;
             }
-            return acc + `| ${tag.name} | ${tag.date} |\n`;
+            return acc;
+        }, "| Release Tag | Date Tagged |\n|-----|---------------|\n");
+
+        existingTagTable = tagsForRepo.reduce((acc, tag, ind) => {
+            if (!tag.isInPullRequest) {
+                return acc + `| ${tag.name} | ${tag.date} |\n`;
+            }
+            return acc;
         }, "| Release Tag | Date Tagged |\n|-----|---------------|\n");
     } catch (e) {
         console.error('Error fetching tags for pull request:', e.message);
@@ -68,7 +75,7 @@ const main = async () => {
         owner,
         repo,
         pullRequestNumber,
-        tagTable
+        `## New Tags\n\n${newTagTable}\n\n## Existing Tags\n\n${existingTagTable}`
     );
 }
 
