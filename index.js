@@ -1,5 +1,14 @@
 const core = require('@actions/core');
 const { context, getOctokit } = require('@actions/github');
+const dateOptions = {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+}
 
 const main = async () => {
     const owner = core.getInput('owner') || context.repo.owner;
@@ -24,32 +33,35 @@ const main = async () => {
                 repo,
                 commit_sha: tag.commit.sha
             });
+            const date = new Date(commitData.data.commit.author.date).toLocaleString("en-US", dateOptions);
 
             return {
                 name: tag.name,
                 sha: tag.commit.sha,
-                date: commitData.data.commit.author.date
+                date
             };
         }));
         tagsWithDates.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
         tagsForRepo = tagsWithDates.map((tag) => {
             const tagCommit = commits.find((commit) => commit.sha === tag.sha);
+            const date = new Date(tag.date).toLocaleString("en-US", dateOptions);
             return {
                 ...tag,
                 isInPullRequest: !!tagCommit,
-                date: tag.date
+                date
             };
         });
         newTagTable = tagsForRepo.reduce((acc, tag, ind) => {
             if (tag.isInPullRequest) {
-                return acc + `| (new) **${tag.name}** | **${tag.date}** |\n`;
+                return acc + `| ${tag.name} | ${tag.date} |\n`;
             }
             return acc;
         }, "| Release Tag | Date Tagged |\n|-----|---------------|\n");
 
         existingTagTable = tagsForRepo.reduce((acc, tag, ind) => {
             if (!tag.isInPullRequest) {
-                return acc + `| ${tag.name} | ${tag.date} |\n`;
+                const date = new Date(tag.date).toLocaleString("en-US", dateOptions);
+                return acc + `| ${tag.name} | ${date} |\n`;
             }
             return acc;
         }, "| Release Tag | Date Tagged |\n|-----|---------------|\n");
